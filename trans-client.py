@@ -11,6 +11,8 @@ with open(fpath, "rb") as f, mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) a
 
   # ========== Send =========
 
+  # (from: https://stackoverflow.com/a/2504133/2885946)
+
   print("Making a request...")
   # Send file
   req = urllib.request.Request(server_url, mmaped_file_as_str)
@@ -27,16 +29,31 @@ with open(fpath, "rb") as f, mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) a
 
   # ========== GET =========
 
-  # Get file
+
+  # Get the file
   url = urllib.parse.urljoin(server_url, file_id)
   print("url:", url)
   req = urllib.request.Request(url)
   print("Getting...")
   res = urllib.request.urlopen(req)
 
-  print(type(res))
-
   # Get File content
-
   with open(file_id, "wb") as outf:
     outf.write(res.read())
+
+
+
+  # ========== DELETE =========
+
+
+    # Delete the file
+    url = urllib.parse.urljoin(server_url, file_id)
+    print("url:", url)
+    req = urllib.request.Request(url)
+    req.get_method = lambda: "DELETE" # (from: https://stackoverflow.com/a/4511785/2885946)
+    print("Deleting...")
+    res = urllib.request.urlopen(req)
+
+
+    print(res.read().decode('utf-8').rstrip())
+
