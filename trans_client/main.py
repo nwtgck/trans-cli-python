@@ -4,10 +4,34 @@ import argparse
 import os.path
 import urllib.request
 import urllib.parse
+import urllib.error
 import mmap
 import sys
 
 SERVER_URL = "http://localhost:8181" # TODO Hard corded
+
+def joined_query_to_url(base_url, params_dict):
+  """
+  Join URL and GET parameters
+  :param base_url:
+  :param params_dict:
+  :return:
+  """
+
+  # Generate GET params string
+  get_params_str = urllib.parse.urlencode({k: v for k, v in params_dict.items() if v is not None})
+
+  # Generate URL with GET params
+  pase_result = urllib.parse.urlparse(base_url)
+  url = urllib.parse.ParseResult(
+    scheme   = pase_result.scheme,
+    netloc   = pase_result.netloc,
+    path     = pase_result.path,
+    query    = get_params_str,
+    params   = pase_result.params,
+    fragment = pase_result.fragment
+  ).geturl()
+  return url
 
 def help_command(args):
   print(args.parser.parse_args([args.command, '--help']))
@@ -19,25 +43,14 @@ def send_command(args):
   for file_path in args.file_paths:
     with open(file_path, "rb") as f, mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mmaped_file:
 
-      # Generate GET params string
-      get_params_str = urllib.parse.urlencode({k: v for k, v in {
+      # Generate URL with GET params
+      url = joined_query_to_url(SERVER_URL, {
         'duration'   : args.duration,
         'get-times'  : args.get_times,
         'id-length'  : args.id_length,
         'deletable'  : args.deletable,
         'delete-key' : args.delete_key
-      }.items() if v is not None})
-
-      # Generate URL with GET params
-      pase_result = urllib.parse.urlparse(SERVER_URL)
-      url = urllib.parse.ParseResult(
-        scheme=pase_result.scheme,
-        netloc=pase_result.netloc,
-        path=pase_result.path,
-        query=get_params_str,
-        params=pase_result.params,
-        fragment=pase_result.fragment
-      ).geturl()
+      })
 
       # Send file
       req = urllib.request.Request(url, mmaped_file)
@@ -67,8 +80,22 @@ def get_command(args):
         print("'%s' is saved!" % file_id)
 
 def delete_command(args):
-  print(args)
-  # TODO impl
+  for file_id in args.file_ids:
+    try:
+      # Generate URL with GET params
+      url = joined_query_to_url(urllib.parse.urljoin(SERVER_URL, file_id), {
+        "delete-key": args.delete_key
+      })
+      # Delete the file
+      req = urllib.request.Request(url)
+      req.get_method = lambda: "DELETE"  # (from: https://stackoverflow.com/a/4511785/2885946)
+      res = urllib.request.urlopen(req)
+
+      server_res = res.read().decode('utf-8').rstrip()
+      print("'%s': '%s'" % (file_id, server_res))
+    except urllib.error.HTTPError as e:
+      print("'%s': '%s'" % (file_id, e))
+
 
 def main():
   # (from: https://qiita.com/oohira/items/308bbd33a77200a35a3d)
@@ -99,7 +126,7 @@ def main():
   # "delete" parser
   send_parser = subparsers.add_parser('delete', help="delete a file")
   send_parser.add_argument('--delete-key', help='Key for delete')
-  send_parser.add_argument('file_id', nargs='*', help="File IDs you want to delete")  # (from: https://stackoverflow.com/a/22850525/2885946)
+  send_parser.add_argument('file_ids', nargs='*', help="File IDs you want to delete")  # (from: https://stackoverflow.com/a/22850525/2885946)
   send_parser.set_defaults(handler=delete_command)
 
 
