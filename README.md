@@ -12,7 +12,7 @@ Command Line Interface for [trans server](https://github.com/nwtgck/trans-server
 You can install `tran-cli` command by `pip`
 
 ```bash
-pip3 install git+https://github.com/nwtgck/trans-cli-python
+pip3 install --upgrade git+https://github.com/nwtgck/trans-cli-python@v1.0.0
 ```
 
 Then you can use `trans-cli` command.
