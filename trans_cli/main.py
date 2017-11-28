@@ -43,24 +43,29 @@ def send_command(args):
   for file_path in args.file_paths:
     with open(file_path, "rb") as f, mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mmaped_file:
 
-      # Generate URL with GET params
-      url = joined_query_to_url(SERVER_URL, {
-        'duration'   : args.duration,
-        'get-times'  : args.get_times,
-        'id-length'  : args.id_length,
-        'deletable'  : args.deletable,
-        'delete-key' : args.delete_key
-      })
+      try:
+        # Generate URL with GET params
+        url = joined_query_to_url(SERVER_URL, {
+          'duration'   : args.duration,
+          'get-times'  : args.get_times,
+          'id-length'  : args.id_length,
+          'deletable'  : args.deletable,
+          'delete-key' : args.delete_key
+        })
 
-      # Send file
-      req = urllib.request.Request(url, mmaped_file)
-      req.add_header("Content-Length", os.path.getsize(file_path))
-      res = urllib.request.urlopen(req)
+        # Send file
+        req = urllib.request.Request(url, mmaped_file)
+        req.add_header("Content-Length", os.path.getsize(file_path))
+        res = urllib.request.urlopen(req)
 
-      # Get File ID
-      file_id = res.read().decode('utf-8').rstrip()
-      # Print File ID
-      print(file_id)
+        # Get File ID
+        file_id = res.read().decode('utf-8').rstrip()
+        # Print File ID
+        print(file_id)
+
+      except urllib.error.URLError as e:
+        print("'%s': '%s'" % (file_path, e))
+
 
 
 def get_command(args):
@@ -99,7 +104,7 @@ def delete_command(args):
 
 def main():
   # (from: https://qiita.com/oohira/items/308bbd33a77200a35a3d)
-  parser     = argparse.ArgumentParser(description="Client for trans")
+  parser     = argparse.ArgumentParser(description="CLI for trans")
   subparsers = parser.add_subparsers()
 
   # "help" parser
