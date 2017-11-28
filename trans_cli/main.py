@@ -169,7 +169,8 @@ def send_command(args):
 
       except urllib.error.URLError as e:
         print("'%s': '%s'" % (file_path, e))
-
+        if hasattr(e, 'read'):
+          print(e.read().decode('utf-8').rstrip())
 
 
 def get_command(args):
@@ -191,6 +192,9 @@ def get_command(args):
 
     except urllib.error.URLError as e:
       print("'%s': '%s'" % (file_id, e))
+      if hasattr(e, 'read'):
+        print(e.read().decode('utf-8').rstrip())
+
 
 def delete_command(args):
   for file_id in args.file_ids:
@@ -208,6 +212,8 @@ def delete_command(args):
       print("'%s': '%s'" % (file_id, server_res))
     except urllib.error.HTTPError as e:
       print("'%s': '%s'" % (file_id, e))
+      if hasattr(e, 'read'):
+        print(e.read().decode('utf-8').rstrip())
 
 
 def server_url_command(args):
@@ -294,7 +300,7 @@ def main():
   send_parser.add_argument('--duration',   help='Store duration (e.g. 10s, 5m, 12h, 3d)')
   send_parser.add_argument('--get-times',  help='Download limit (e.g. 1, 10)')
   send_parser.add_argument('--id-length',  help='Length of ID (e.g. 1, 3, 10)')
-  send_parser.add_argument('--deletable',  action="store_true", help='Whether file is deletable or not')
+  send_parser.add_argument('--deletable',  action="store_true", default=True, help='Whether file is deletable or not')
   send_parser.add_argument('--delete-key', help='Key for delete')
   send_parser.add_argument('file_paths', nargs='*', help="File paths you want to send") # (from: https://stackoverflow.com/a/22850525/2885946)
   send_parser.set_defaults(handler=send_command)
