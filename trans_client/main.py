@@ -1,13 +1,54 @@
 #! /usr/bin/env python
 
 import argparse
+import os.path
+import urllib.request
+import urllib.parse
+import mmap
+
+
+SERVER_URL = "http://localhost:8181" # TODO Hard corded
 
 def help_command(args):
   print(args.parser.parse_args([args.command, '--help']))
 
+
+# (from: https://stackoverflow.com/a/2504133/2885946)
 def send_command(args):
-  print(args)
-  # TODO impl
+
+  for file_path in args.file_paths:
+    with open(file_path, "rb") as f, mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mmaped_file:
+
+      # Generate GET params string
+      get_params_str = urllib.parse.urlencode({k: v for k, v in {
+        'duration'   : args.duration,
+        'get-times'  : args.get_times,
+        'id-length'  : args.id_length,
+        'deletable'  : args.deletable,
+        'delete-key' : args.delete_key
+      }.items() if v is not None})
+
+      # Generate URL with GET params
+      pase_result = urllib.parse.urlparse(SERVER_URL)
+      url = urllib.parse.ParseResult(
+        scheme=pase_result.scheme,
+        netloc=pase_result.netloc,
+        path=pase_result.path,
+        query=get_params_str,
+        params=pase_result.params,
+        fragment=pase_result.fragment
+      ).geturl()
+
+      # Send file
+      req = urllib.request.Request(url, mmaped_file)
+      req.add_header("Content-Length", os.path.getsize(file_path))
+      res = urllib.request.urlopen(req)
+
+      # Get File ID
+      file_id = res.read().decode('utf-8').rstrip()
+      # Print File ID
+      print(file_id)
+
 
 def get_command(args):
   print(args)
@@ -34,7 +75,7 @@ def main():
   send_parser.add_argument('--id-length',  help='Length of ID')
   send_parser.add_argument('--deletable',  help='File is deletable or not')
   send_parser.add_argument('--delete-key', help='Key for delete')
-  send_parser.add_argument('file_path', nargs='*', help="File paths you want to send") # (from: https://stackoverflow.com/a/22850525/2885946)
+  send_parser.add_argument('file_paths', nargs='*', help="File paths you want to send") # (from: https://stackoverflow.com/a/22850525/2885946)
   send_parser.set_defaults(handler=send_command)
 
   # "get" parser
