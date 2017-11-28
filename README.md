@@ -16,3 +16,56 @@ pip3 install git+https://github.com/nwtgck/trans-cli-python
 ```
 
 Then you can use `trans-cli` command.
+
+## Basic usages
+
+```bash
+# Send a file
+trans-cli send ~/Documents/hello.txt
+```
+
+```bash
+# Get a file
+trans-cli get d84
+```
+(File ID, `d84` is save as `d84` file in `$PWD`)
+
+```bash
+# Get a file
+trans-cli delete d84
+```
+
+## Advanced usages
+
+### Send
+
+```bash
+# Send a file with 30-second-store-duration
+trans-cli send --duration=30s ~/Documents/hello.txt
+```
+
+```bash
+# Send a file with download-once limit
+trans-cli send --get-times=1 ~/Documents/hello.txt
+```
+
+```bash
+# Send a file with delete-key
+trans-cli send --delete-key=mydeletekey123 ~/Documents/hello.txt
+```
+
+```bash
+# Send a file with longer id-length
+trans-cli send --id-length=16 ~/Documents/hello.txt
+```
+
+You can get more information by `trans-cli send -h`
+
+
+## Delete
+
+
+```bash
+# Delete a file with delete-key
+trans-cli delete --delete-key=mydeletekey123 d31
+```
