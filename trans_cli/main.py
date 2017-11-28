@@ -24,13 +24,13 @@ TRANS_CONFIG_DIR_PATH  = os.path.join(CONFIG_DIR_PATH, CONFIG_DIR_NAME)
 TRANS_CONFIG_FILE_PATH = os.path.join(TRANS_CONFIG_DIR_PATH, CONFIG_FILE_NAME)
 SERVER_URL             = None # NOTE: This will be stored by init()
 
-def overwrite_config(sub_config):
+def overwrite_config(sub_config_creator):
   with open(TRANS_CONFIG_FILE_PATH, 'r') as f:
     config = json.load(f)
 
     # Overwrite sub config to config
-    for key,value in sub_config.items():
-      config[key] = value
+    for key,value_creator in sub_config_creator.items():
+      config[key] = value_creator(config.get(key))
 
     # Write config file again
     with open(TRANS_CONFIG_FILE_PATH, 'w') as f:
@@ -39,7 +39,7 @@ def overwrite_config(sub_config):
 def write_server_url(new_server_url):
   if is_valid_url(new_server_url):
     overwrite_config({
-      "server_url": new_server_url
+      "server_url": lambda prev: new_server_url
     })
   else:
     print("Server URL is NOT valid: '%s'" % new_server_url, file=sys.stderr)
@@ -212,9 +212,9 @@ def config_command(args):
   elif args.store_path:
     # Show store-path of config
     print(TRANS_CONFIG_FILE_PATH)
-  elif args.server_url:
+  elif args.server:
     # Set new server URL
-    new_url = args.server_url
+    new_url = args.server
     write_server_url(new_url)
     print("'%s' set" % (new_url))
   else:
@@ -263,7 +263,7 @@ def main():
   config_parser = subparsers.add_parser('config', help="set server URL or show config")
   config_parser.add_argument('--list', action="store_true", help='Show current config')
   config_parser.add_argument('--store-path', action="store_true", help='Show store path')
-  config_parser.add_argument('--server-url', help="Server URL you want to set")
+  config_parser.add_argument('--server', help="Server URL you want to set")
   config_parser.set_defaults(handler=config_command)
 
 
