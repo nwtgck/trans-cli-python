@@ -1,9 +1,9 @@
 language: python
 
 python:
-#  - 3.4
+  - 3.4
   - 3.5
-#  - 3.6
+  - 3.6
 
 
 services:
@@ -33,9 +33,6 @@ script:
 
   # Delete the file
   - trans-cli delete `cat file_id.txt`
-
-
-
 
 cache:
   - apt
