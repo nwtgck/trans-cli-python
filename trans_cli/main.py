@@ -11,6 +11,7 @@ import os
 import json
 import re
 import pkg_resources
+import itertools
 
 DEFAULT_SERVER_URL     = "https://trans-akka.herokuapp.com"
 CONFIG_DIR_NAME        = "trans-cli-python"
@@ -24,13 +25,26 @@ TRANS_CONFIG_DIR_PATH  = os.path.join(CONFIG_DIR_PATH, CONFIG_DIR_NAME)
 TRANS_CONFIG_FILE_PATH = os.path.join(TRANS_CONFIG_DIR_PATH, CONFIG_FILE_NAME)
 SERVER_URL             = None # NOTE: This will be stored by init()
 
-def write_server_url(new_server_url):
+def overwrite_config(sub_config_creator):
   with open(TRANS_CONFIG_FILE_PATH, 'r') as f:
     config = json.load(f)
-    # Rewrite
-    config["server_url"] = new_server_url
+
+    # Overwrite sub config to config
+    for key,value_creator in sub_config_creator.items():
+      config[key] = value_creator(config.get(key))
+
+    # Write config file again
     with open(TRANS_CONFIG_FILE_PATH, 'w') as f:
       json.dump(config, f, sort_keys=True, indent=2)
+
+def write_server_url(new_server_url):
+  if is_valid_url(new_server_url):
+    overwrite_config({
+      "server_url": lambda prev: new_server_url
+    })
+  else:
+    print("Server URL is NOT valid: '%s'" % new_server_url, file=sys.stderr)
+    exit(1)
 
 def is_valid_url(url):
   # (from: https://stackoverflow.com/a/7160778/2885946)
@@ -65,6 +79,16 @@ def init():
 
     # Write default setting
     write_server_url(DEFAULT_SERVER_URL)
+
+    # Set default server aliases
+    overwrite_config({
+      "server_aliases": lambda prev: [
+        {"name": "local80",   "url": "http://localhost"},
+        {"name": "local8080", "url": "http://localhost:8080"},
+        {"name": "local8181", "url": "http://localhost:8181"},
+        {"name": "heroku",    "url": "https://trans-akka.herokuapp.com"}
+      ]
+    })
 
   # Load SERVER_URL from config
   with open(TRANS_CONFIG_FILE_PATH, 'r') as f:
@@ -105,6 +129,13 @@ def joined_query_to_url(base_url, params_dict):
     fragment = pase_result.fragment
   ).geturl()
   return url
+
+
+def find_index(list, p):
+  for idx, e in enumerate(list):
+    if p(e):
+      return idx
+  return None
 
 def help_command(args):
   print(args.parser.parse_args([args.command, '--help']))
@@ -190,6 +221,58 @@ def server_url_command(args):
     write_server_url(new_server_url)
     print("'%s' set" % (new_server_url))
 
+def config_command(args):
+  if args.list:
+    with open(TRANS_CONFIG_FILE_PATH, 'r') as f:
+      # Show config
+      config_str = f.read()
+      print(config_str)
+  elif args.store_path:
+    # Show store-path of config
+    print(TRANS_CONFIG_FILE_PATH)
+  elif args.alias_name and args.alias_url:
+
+    def overwrite(prev_aliases):
+      name = args.alias_name
+      url  = args.alias_url
+      new_alias = {"name": name, "url": url}
+      if prev_aliases is None:
+        return [new_alias]
+      else:
+        idx = find_index(prev_aliases, lambda x: x["name"] == name)
+        if idx is None:
+          return prev_aliases + [new_alias]
+        else:
+          prev_aliases[idx] = new_alias
+          return prev_aliases
+
+    # Enrol server alias
+    new_alias = {"name": args.alias_name, "url": args.alias_url}
+    overwrite_config({
+      "server_aliases": overwrite
+    })
+    print("'%s' is enrolled" % json.dumps(new_alias))
+
+  elif args.server:
+    server = args.server
+    if is_valid_url(server):
+      new_url = server
+    else:
+      with open(TRANS_CONFIG_FILE_PATH, 'r') as f:
+        config = json.load(f)
+        server_aliases = config.get("server_aliases")
+        if server_aliases is None:
+          print("Error: server_aliases is missing in config", file=sys.stderr)
+          exit(1)
+        found_alias = next(filter(lambda x: x["name"] == server, server_aliases), None)
+        new_url = found_alias.get("url")
+    # Set new server URL
+    write_server_url(new_url)
+    print("'%s' set" % (new_url))
+  else:
+    pass
+
+
 def main():
 
   # Initialize config if need and get SERVER URL
@@ -217,22 +300,25 @@ def main():
   send_parser.set_defaults(handler=send_command)
 
   # "get" parser
-  send_parser = subparsers.add_parser('get', help="get files")
-  send_parser.add_argument('--stdout', action="store_true", help="Output to stdout")
-  send_parser.add_argument('file_ids', nargs='*', help="File IDs you want to get")  # (from: https://stackoverflow.com/a/22850525/2885946)
-  send_parser.set_defaults(handler=get_command)
+  get_parser = subparsers.add_parser('get', help="get files")
+  get_parser.add_argument('--stdout', action="store_true", help="Output to stdout")
+  get_parser.add_argument('file_ids', nargs='*', help="File IDs you want to get")  # (from: https://stackoverflow.com/a/22850525/2885946)
+  get_parser.set_defaults(handler=get_command)
 
   # "delete" parser
-  send_parser = subparsers.add_parser('delete', help="delete a file")
-  send_parser.add_argument('--delete-key', help='Key for delete')
-  send_parser.add_argument('file_ids', nargs='*', help="File IDs you want to delete")  # (from: https://stackoverflow.com/a/22850525/2885946)
-  send_parser.set_defaults(handler=delete_command)
+  delete_parser = subparsers.add_parser('delete', help="delete a file")
+  delete_parser.add_argument('--delete-key', help='Key for delete')
+  delete_parser.add_argument('file_ids', nargs='*', help="File IDs you want to delete")  # (from: https://stackoverflow.com/a/22850525/2885946)
+  delete_parser.set_defaults(handler=delete_command)
 
-  # "server-url" parser
-  send_parser = subparsers.add_parser('server-url', help="set server URL")
-  send_parser.add_argument('--show', action="store_true", help='Show current server URL')
-  send_parser.add_argument('server_url', nargs='?', help="Server URL you want to set")  # (from: https://stackoverflow.com/a/22850525/2885946)
-  send_parser.set_defaults(handler=server_url_command)
+  # "config" parser
+  config_parser = subparsers.add_parser('config', help="set server URL or show config")
+  config_parser.add_argument('--list', action="store_true", help='Show current config')
+  config_parser.add_argument('--store-path', action="store_true", help='Show store path')
+  config_parser.add_argument('--server',    help="Server URL you want to set")
+  config_parser.add_argument('--alias-name', help="Enrol server alias name (NOTE: Use with --alias-url)")
+  config_parser.add_argument('--alias-url',  help="Enrol server alias URL (NOTE: Use with --alias-name)")
+  config_parser.set_defaults(handler=config_command)
 
 
   # Parse arguments

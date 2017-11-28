@@ -20,7 +20,7 @@ script:
   - trans-cli --version
 
   # Set server URL to localhost trans server
-  - trans-cli server-url "http://localhost:8080"
+  - trans-cli config --server="http://localhost:8080"
 
   #  Create random 10MB file
   - dd if=/dev/urandom of=10MB.file bs=1024 count=10240
@@ -36,6 +36,13 @@ script:
 
   # Delete the file
   - trans-cli delete `cat file_id.txt`
+
+  # Config running test
+  - trans-cli config --list
+  - trans-cli config --store-path
+  - trans-cli config --server=local8080
+  - trans-cli config --alias-name=sloca8181 --alias-url=https://localhost:8081
+
 
 cache:
   - apt
