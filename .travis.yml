@@ -41,6 +41,7 @@ script:
   - trans-cli config --list
   - trans-cli config --store-path
   - trans-cli config --server=local8080
+  - trans-cli config --alias-name=sloca8181 --alias-url=https://localhost:8081
 
 
 cache:

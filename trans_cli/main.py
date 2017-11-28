@@ -130,6 +130,13 @@ def joined_query_to_url(base_url, params_dict):
   ).geturl()
   return url
 
+
+def find_index(list, p):
+  for idx, e in enumerate(list):
+    if p(e):
+      return idx
+  return None
+
 def help_command(args):
   print(args.parser.parse_args([args.command, '--help']))
 
@@ -223,6 +230,29 @@ def config_command(args):
   elif args.store_path:
     # Show store-path of config
     print(TRANS_CONFIG_FILE_PATH)
+  elif args.alias_name and args.alias_url:
+
+    def overwrite(prev_aliases):
+      name = args.alias_name
+      url  = args.alias_url
+      new_alias = {"name": name, "url": url}
+      if prev_aliases is None:
+        return [new_alias]
+      else:
+        idx = find_index(prev_aliases, lambda x: x["name"] == name)
+        if idx is None:
+          return prev_aliases + [new_alias]
+        else:
+          prev_aliases[idx] = new_alias
+          return prev_aliases
+
+    # Enrol server alias
+    new_alias = {"name": args.alias_name, "url": args.alias_url}
+    overwrite_config({
+      "server_aliases": overwrite
+    })
+    print("'%s' is enrolled" % json.dumps(new_alias))
+
   elif args.server:
     server = args.server
     if is_valid_url(server):
@@ -286,6 +316,8 @@ def main():
   config_parser.add_argument('--list', action="store_true", help='Show current config')
   config_parser.add_argument('--store-path', action="store_true", help='Show store path')
   config_parser.add_argument('--server',    help="Server URL you want to set")
+  config_parser.add_argument('--alias-name', help="Enrol server alias name (NOTE: Use with --alias-url)")
+  config_parser.add_argument('--alias-url',  help="Enrol server alias URL (NOTE: Use with --alias-name)")
   config_parser.set_defaults(handler=config_command)
 
 
