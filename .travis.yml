@@ -16,7 +16,7 @@ python:
 #  - pip install .
 
 script:
-  - pip3 install --upgrade git+https://github.com/nwtgck/trans-cli.git@$TRAVIS_BRANCH
+  - pip3 install --upgrade git+https://github.com/nwtgck/trans-cli-python.git@$TRAVIS_BRANCH
   - trans-cli
 
 
