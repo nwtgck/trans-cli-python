@@ -62,6 +62,16 @@ trans-cli send --id-length=16 ~/Documents/hello.txt
 You can get more information by `trans-cli send -h`
 
 
+### Get 
+
+```bash
+# Get a file content in stdout and redirect to `my.txt`
+trans-cli get --stdout d84 > my.txt
+```
+
+You can get more information by `trans-cli get -h`
+
+
 ## Delete
 
 
@@ -69,3 +79,5 @@ You can get more information by `trans-cli send -h`
 # Delete a file with delete-key
 trans-cli delete --delete-key=mydeletekey123 d31
 ```
+
+You can get more information by `trans-cli delete -h`
