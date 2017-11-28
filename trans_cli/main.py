@@ -70,19 +70,23 @@ def send_command(args):
 
 def get_command(args):
   for file_id in args.file_ids:
-    # Get the file
-    url = urllib.parse.urljoin(SERVER_URL, file_id)
-    req = urllib.request.Request(url)
-    res = urllib.request.urlopen(req)
+    try:
+      # Get the file
+      url = urllib.parse.urljoin(SERVER_URL, file_id)
+      req = urllib.request.Request(url)
+      res = urllib.request.urlopen(req)
 
-    if args.stdout:
-      # Write to stdout
-      sys.stdout.buffer.write(res.read()) # (from: https://stackoverflow.com/a/908440/2885946)
-    else:
-      # Save file content to a file
-      with open(file_id, "wb") as outf:
-        outf.write(res.read())
-        print("'%s' is saved!" % file_id)
+      if args.stdout:
+        # Write to stdout
+        sys.stdout.buffer.write(res.read()) # (from: https://stackoverflow.com/a/908440/2885946)
+      else:
+        # Save file content to a file
+        with open(file_id, "wb") as outf:
+          outf.write(res.read())
+          print("'%s' is saved!" % file_id)
+
+    except urllib.error.URLError as e:
+      print("'%s': '%s'" % (file_id, e))
 
 def delete_command(args):
   for file_id in args.file_ids:
