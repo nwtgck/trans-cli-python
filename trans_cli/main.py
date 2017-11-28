@@ -219,13 +219,13 @@ def main():
   # Parse arguments
   args = parser.parse_args()
 
-  # If it's known command
-  if hasattr(args, 'handler'):
-    # Handle command
-    args.handler(args)
-  elif hasattr(args, 'version'):
+  if args.version:
     # Show version
     print("trans-cli (python) version %s" % VERSION)
+  # If it's known command
+  elif hasattr(args, 'handler'):
+    # Handle command
+    args.handler(args)
   else:
     # Show help
     parser.print_help()
