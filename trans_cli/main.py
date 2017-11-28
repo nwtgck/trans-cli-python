@@ -22,7 +22,7 @@ CONFIG_DIR_PATH        = os.path.join(os.environ['HOME'], ".config")
 TRANS_CONFIG_DIR_PATH  = os.path.join(CONFIG_DIR_PATH, CONFIG_DIR_NAME)
 # "~/.config/<CONFIG_DIR_NAME>/<CONFIG_FILE_NAME>"
 TRANS_CONFIG_FILE_PATH = os.path.join(TRANS_CONFIG_DIR_PATH, CONFIG_FILE_NAME)
-SERVER_URL             = None # NOTE: This will be stored by init_config()
+SERVER_URL             = None # NOTE: This will be stored by init()
 
 def write_server_url(new_server_url):
   with open(TRANS_CONFIG_FILE_PATH, 'r') as f:
@@ -44,6 +44,8 @@ def is_valid_url(url):
   return regex.match(url)
 
 def init():
+  global SERVER_URL
+
   # If "~/.config" doesn't exist
   if not os.path.exists(CONFIG_DIR_PATH):
     # Make ~/.config
