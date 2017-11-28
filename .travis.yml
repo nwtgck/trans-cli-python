@@ -31,8 +31,8 @@ script:
   # Diff
   - diff 10MB.file `cat file_id.txt`
 
-  # Diff to fail on purpose
-  - diff README.md setup.py
+  # Delete the file
+  - trans-cli delete `cat file_id.txt`
 
 
 
