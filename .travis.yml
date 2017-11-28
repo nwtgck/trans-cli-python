@@ -31,6 +31,9 @@ script:
   # Diff
   - diff 10MB.file `cat file_id.txt`
 
+  # Diff to fail on purpose
+  - diff README.md setup.py
+
 
 
 
