@@ -11,12 +11,27 @@ services:
 
 script:
   # Run trans server on Docker
-  - docker run -d -p 80:80 nwtgck/trans-server-akka:v1.4.0
+  - docker run -d -p 8080:80 nwtgck/trans-server-akka:v1.4.0
 
   # Install trans-cli from GitHub
   - pip3 install --upgrade git+https://github.com/nwtgck/trans-cli-python.git@$TRAVIS_BRANCH
-  # Show help of trans-cli
-  - trans-cli
+
+  # Set server URL to localhost trans server
+  - trans-cli server-url "http://localhost:8080"
+
+  #  Create random 10MB file
+  - dd if=/dev/urandom of=10MB.file bs=1024 count=10240
+
+  # Send 10MB.file
+  - trans-cli send 10MB.file > file_id.txt
+
+  # Get the file
+  - trans-cli get `cat file_id.txt`
+
+  # Diff
+  - diff 10MB.file `cat file_id.txt`
+
+
 
 
 cache:
