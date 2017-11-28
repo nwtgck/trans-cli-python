@@ -22,7 +22,7 @@ CONFIG_DIR_PATH        = os.path.join(os.environ['HOME'], ".config")
 TRANS_CONFIG_DIR_PATH  = os.path.join(CONFIG_DIR_PATH, CONFIG_DIR_NAME)
 # "~/.config/<CONFIG_DIR_NAME>/<CONFIG_FILE_NAME>"
 TRANS_CONFIG_FILE_PATH = os.path.join(TRANS_CONFIG_DIR_PATH, CONFIG_FILE_NAME)
-
+SERVER_URL             = None # NOTE: This will be stored by init_config()
 
 def write_server_url(new_server_url):
   with open(TRANS_CONFIG_FILE_PATH, 'r') as f:
@@ -43,34 +43,35 @@ def is_valid_url(url):
     r'(?:/?|[/?]\S+)$', re.IGNORECASE)
   return regex.match(url)
 
-# If "~/.config" doesn't exist
-if not os.path.exists(CONFIG_DIR_PATH):
-  # Make ~/.config
-  os.mkdir(CONFIG_DIR_PATH)
+def init():
+  # If "~/.config" doesn't exist
+  if not os.path.exists(CONFIG_DIR_PATH):
+    # Make ~/.config
+    os.mkdir(CONFIG_DIR_PATH)
 
-# If "~/.config/<CONFIG_DIR_NAME>/" doesn't exist
-if not os.path.exists(TRANS_CONFIG_DIR_PATH):
-  # Make "~/.config/<CONFIG_DIR_NAME>/"
-  os.mkdir(TRANS_CONFIG_DIR_PATH)
+  # If "~/.config/<CONFIG_DIR_NAME>/" doesn't exist
+  if not os.path.exists(TRANS_CONFIG_DIR_PATH):
+    # Make "~/.config/<CONFIG_DIR_NAME>/"
+    os.mkdir(TRANS_CONFIG_DIR_PATH)
 
 
-# If "~/.config/<CONFIG_DIR_NAME>/<CONFIG_FILE_NAME>" doesn't exist
-if not os.path.exists(TRANS_CONFIG_FILE_PATH):
-  # Write empty setting
-  with open(TRANS_CONFIG_FILE_PATH, 'w') as f:
-    json.dump({}, f)
+  # If "~/.config/<CONFIG_DIR_NAME>/<CONFIG_FILE_NAME>" doesn't exist
+  if not os.path.exists(TRANS_CONFIG_FILE_PATH):
+    # Write empty setting
+    with open(TRANS_CONFIG_FILE_PATH, 'w') as f:
+      json.dump({}, f)
 
-  # Write default setting
-  write_server_url(DEFAULT_SERVER_URL)
+    # Write default setting
+    write_server_url(DEFAULT_SERVER_URL)
 
-# Load SERVER_URL from config
-with open(TRANS_CONFIG_FILE_PATH, 'r') as f:
-  config = json.load(f)
-  SERVER_URL = config["server_url"]
+  # Load SERVER_URL from config
+  with open(TRANS_CONFIG_FILE_PATH, 'r') as f:
+    config = json.load(f)
+    SERVER_URL = config["server_url"]
 
-  if not is_valid_url(SERVER_URL):
-    print("Server URL (='%s') is NOT valid in '%s'" % (SERVER_URL, TRANS_CONFIG_FILE_PATH), file=sys.stderr)
-    exit(1)
+    if not is_valid_url(SERVER_URL):
+      print("Server URL (='%s') is NOT valid in '%s'" % (SERVER_URL, TRANS_CONFIG_FILE_PATH), file=sys.stderr)
+      exit(1)
 
 
 def joined_query_to_url(base_url, params_dict):
@@ -188,6 +189,10 @@ def server_url_command(args):
     print("'%s' set" % (new_server_url))
 
 def main():
+
+  # Initialize config if need and get SERVER URL
+  init()
+
   # (from: https://qiita.com/oohira/items/308bbd33a77200a35a3d)
   parser     = argparse.ArgumentParser(description="CLI for trans (version: %s)" % (VERSION))
   subparsers = parser.add_subparsers()
