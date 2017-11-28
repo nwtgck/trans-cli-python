@@ -1,0 +1,26 @@
+# (from: https://qiita.com/masashi127/items/5bfcba5cad8e82958844)
+
+language: python
+
+python:
+#  - 3.4
+  - 3.5
+#  - 3.6
+
+
+#before_install:
+#  - pip install -U pip setuptools wheel # (from: https://github.com/dnouri/nolearn/blob/master/.travis.yml)
+
+#install:
+#  - travis_wait travis_retry pip install -r requirements.txt # (from: https://github.com/dnouri/nolearn/blob/master/.travis.yml)
+#  - pip install .
+
+script:
+  - pip3 install --upgrade git+https://github.com/nwtgck/trans-cli.git@$TRAVIS_BRANCH
+  - trans-cli
+
+
+cache:
+  - apt
+  - directories:
+    - $HOME/.cache/pip
