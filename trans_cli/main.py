@@ -7,8 +7,58 @@ import urllib.parse
 import urllib.error
 import mmap
 import sys
+import os
+import json
+import re
 
-SERVER_URL = "http://localhost:8181" # TODO Hard corded
+DEFAULT_SERVER_URL = "https://trans-akka.herokuapp.com"
+CONFIG_DIR_NAME    = "trans-cli-python"
+CONFIG_FILE_NAME   = "config.json"
+
+# "~/.config"
+config_dir_path = os.path.join(os.environ['HOME'], ".config")
+# If "~/.config" doesn't exist
+if not os.path.exists(config_dir_path):
+  # Make ~/.config
+  os.mkdir(config_dir_path)
+
+
+# "~/.config/<CONFIG_DIR_NAME>/"
+trans_config_dir_path = os.path.join(config_dir_path, CONFIG_DIR_NAME)
+# If "~/.config/<CONFIG_DIR_NAME>/" doesn't exist
+if not os.path.exists(trans_config_dir_path):
+  # Make "~/.config/<CONFIG_DIR_NAME>/"
+  os.mkdir(trans_config_dir_path)
+
+
+# "~/.config/<CONFIG_DIR_NAME>/<CONFIG_FILE_NAME>"
+trans_config_file_path = os.path.join(trans_config_dir_path, CONFIG_FILE_NAME)
+# If "~/.config/<CONFIG_DIR_NAME>/<CONFIG_FILE_NAME>" doesn't exist
+if not os.path.exists(trans_config_file_path):
+  # Make "~/.config/<CONFIG_DIR_NAME>/<CONFIG_FILE_NAME>"
+  with open(trans_config_file_path, 'w') as f:
+    json.dump({
+      "server_url": DEFAULT_SERVER_URL,
+    }, f)
+
+# Load SERVER_URL from config
+with open(trans_config_file_path, 'r') as f:
+  config = json.load(f)
+  SERVER_URL = config["server_url"]
+
+  # (from: https://stackoverflow.com/a/7160778/2885946)
+  regex = re.compile(
+    r'^(?:http|ftp)s?://'  # http:// or https://
+    r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'  # domain...
+    r'localhost|'  # localhost...
+    r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'  # ...or ip
+    r'(?::\d+)?'  # optional port
+    r'(?:/?|[/?]\S+)$', re.IGNORECASE)
+
+  if not regex.match(SERVER_URL):
+    print("Server URL (='%s') is NOT valid in '%s'" % (SERVER_URL, trans_config_file_path), file=sys.stderr)
+    exit(1)
+
 
 def joined_query_to_url(base_url, params_dict):
   """
@@ -105,6 +155,9 @@ def delete_command(args):
     except urllib.error.HTTPError as e:
       print("'%s': '%s'" % (file_id, e))
 
+def server_url_command(args):
+  print(args)
+
 
 def main():
   # (from: https://qiita.com/oohira/items/308bbd33a77200a35a3d)
@@ -137,6 +190,12 @@ def main():
   send_parser.add_argument('--delete-key', help='Key for delete')
   send_parser.add_argument('file_ids', nargs='*', help="File IDs you want to delete")  # (from: https://stackoverflow.com/a/22850525/2885946)
   send_parser.set_defaults(handler=delete_command)
+
+  # "server-url" parser
+  send_parser = subparsers.add_parser('server-url', help="Set server URL")
+  send_parser.add_argument('--show', action="store_true", help='Show current server URL')
+  send_parser.add_argument('server_url', nargs='?', help="Server URL you want to set")  # (from: https://stackoverflow.com/a/22850525/2885946)
+  send_parser.set_defaults(handler=server_url_command)
 
 
   # Parse arguments
