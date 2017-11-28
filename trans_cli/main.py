@@ -24,13 +24,26 @@ TRANS_CONFIG_DIR_PATH  = os.path.join(CONFIG_DIR_PATH, CONFIG_DIR_NAME)
 TRANS_CONFIG_FILE_PATH = os.path.join(TRANS_CONFIG_DIR_PATH, CONFIG_FILE_NAME)
 SERVER_URL             = None # NOTE: This will be stored by init()
 
-def write_server_url(new_server_url):
+def overwrite_config(sub_config):
   with open(TRANS_CONFIG_FILE_PATH, 'r') as f:
     config = json.load(f)
-    # Rewrite
-    config["server_url"] = new_server_url
+
+    # Overwrite sub config to config
+    for key,value in sub_config.items():
+      config[key] = value
+
+    # Write config file again
     with open(TRANS_CONFIG_FILE_PATH, 'w') as f:
       json.dump(config, f, sort_keys=True, indent=2)
+
+def write_server_url(new_server_url):
+  if is_valid_url(new_server_url):
+    overwrite_config({
+      "server_url": new_server_url
+    })
+  else:
+    print("Server URL is NOT valid: '%s'" % new_server_url, file=sys.stderr)
+    exit(1)
 
 def is_valid_url(url):
   # (from: https://stackoverflow.com/a/7160778/2885946)
@@ -190,6 +203,24 @@ def server_url_command(args):
     write_server_url(new_server_url)
     print("'%s' set" % (new_server_url))
 
+def config_command(args):
+  if args.list:
+    with open(TRANS_CONFIG_FILE_PATH, 'r') as f:
+      # Show config
+      config_str = f.read()
+      print(config_str)
+  elif args.store_path:
+    # Show store-path of config
+    print(TRANS_CONFIG_FILE_PATH)
+  elif args.server_url:
+    # Set new server URL
+    new_url = args.server_url
+    write_server_url(new_url)
+    print("'%s' set" % (new_url))
+  else:
+    pass
+
+
 def main():
 
   # Initialize config if need and get SERVER URL
@@ -217,22 +248,23 @@ def main():
   send_parser.set_defaults(handler=send_command)
 
   # "get" parser
-  send_parser = subparsers.add_parser('get', help="get files")
-  send_parser.add_argument('--stdout', action="store_true", help="Output to stdout")
-  send_parser.add_argument('file_ids', nargs='*', help="File IDs you want to get")  # (from: https://stackoverflow.com/a/22850525/2885946)
-  send_parser.set_defaults(handler=get_command)
+  get_parser = subparsers.add_parser('get', help="get files")
+  get_parser.add_argument('--stdout', action="store_true", help="Output to stdout")
+  get_parser.add_argument('file_ids', nargs='*', help="File IDs you want to get")  # (from: https://stackoverflow.com/a/22850525/2885946)
+  get_parser.set_defaults(handler=get_command)
 
   # "delete" parser
-  send_parser = subparsers.add_parser('delete', help="delete a file")
-  send_parser.add_argument('--delete-key', help='Key for delete')
-  send_parser.add_argument('file_ids', nargs='*', help="File IDs you want to delete")  # (from: https://stackoverflow.com/a/22850525/2885946)
-  send_parser.set_defaults(handler=delete_command)
+  delete_parser = subparsers.add_parser('delete', help="delete a file")
+  delete_parser.add_argument('--delete-key', help='Key for delete')
+  delete_parser.add_argument('file_ids', nargs='*', help="File IDs you want to delete")  # (from: https://stackoverflow.com/a/22850525/2885946)
+  delete_parser.set_defaults(handler=delete_command)
 
-  # "server-url" parser
-  send_parser = subparsers.add_parser('server-url', help="set server URL")
-  send_parser.add_argument('--show', action="store_true", help='Show current server URL')
-  send_parser.add_argument('server_url', nargs='?', help="Server URL you want to set")  # (from: https://stackoverflow.com/a/22850525/2885946)
-  send_parser.set_defaults(handler=server_url_command)
+  # "config" parser
+  config_parser = subparsers.add_parser('config', help="set server URL or show config")
+  config_parser.add_argument('--list', action="store_true", help='Show current config')
+  config_parser.add_argument('--store-path', action="store_true", help='Show store path')
+  config_parser.add_argument('--server-url', help="Server URL you want to set")
+  config_parser.set_defaults(handler=config_command)
 
 
   # Parse arguments
