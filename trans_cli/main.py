@@ -122,7 +122,6 @@ def send_command(args):
           'deletable'  : args.deletable,
           'delete-key' : args.delete_key
         })
-        print(url)
 
         # Send file
         req = urllib.request.Request(url, mmaped_file)
