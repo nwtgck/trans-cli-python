@@ -76,8 +76,15 @@ def joined_query_to_url(base_url, params_dict):
   :return:
   """
 
+  def v_mapper(v):
+    if type(v) == bool:
+      return "true" if v else "false"
+    else:
+      return v
+
+
   # Generate GET params string
-  get_params_str = urllib.parse.urlencode({k: v for k, v in params_dict.items() if v is not None})
+  get_params_str = urllib.parse.urlencode({k: v_mapper(v) for k, v in params_dict.items() if v is not None})
 
   # Generate URL with GET params
   pase_result = urllib.parse.urlparse(base_url)
@@ -110,6 +117,7 @@ def send_command(args):
           'deletable'  : args.deletable,
           'delete-key' : args.delete_key
         })
+        print(url)
 
         # Send file
         req = urllib.request.Request(url, mmaped_file)
@@ -192,7 +200,7 @@ def main():
   send_parser.add_argument('--duration',   help='Store duration')
   send_parser.add_argument('--get-times',  help='Download limit')
   send_parser.add_argument('--id-length',  help='Length of ID')
-  send_parser.add_argument('--deletable',  help='File is deletable or not')
+  send_parser.add_argument('--deletable',  action="store_true", help='File is deletable or not')
   send_parser.add_argument('--delete-key', help='Key for delete')
   send_parser.add_argument('file_paths', nargs='*', help="File paths you want to send") # (from: https://stackoverflow.com/a/22850525/2885946)
   send_parser.set_defaults(handler=send_command)
