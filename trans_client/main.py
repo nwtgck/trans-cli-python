@@ -5,7 +5,7 @@ import os.path
 import urllib.request
 import urllib.parse
 import mmap
-
+import sys
 
 SERVER_URL = "http://localhost:8181" # TODO Hard corded
 
@@ -51,8 +51,20 @@ def send_command(args):
 
 
 def get_command(args):
-  print(args)
-  # TODO impl
+  for file_id in args.file_ids:
+    # Get the file
+    url = urllib.parse.urljoin(SERVER_URL, file_id)
+    req = urllib.request.Request(url)
+    res = urllib.request.urlopen(req)
+
+    if args.stdout:
+      # Write to stdout
+      sys.stdout.buffer.write(res.read()) # (from: https://stackoverflow.com/a/908440/2885946)
+    else:
+      # Save file content to a file
+      with open(file_id, "wb") as outf:
+        outf.write(res.read())
+        print("'%s' is saved!" % file_id)
 
 def delete_command(args):
   print(args)
@@ -69,7 +81,7 @@ def main():
   parser_help.set_defaults(handler=help_command, parser=parser)
 
   # "send" parser
-  send_parser = subparsers.add_parser('send', help="send a file")
+  send_parser = subparsers.add_parser('send', help="send files")
   send_parser.add_argument('--duration',   help='Store duration')
   send_parser.add_argument('--get-times',  help='Download limit')
   send_parser.add_argument('--id-length',  help='Length of ID')
@@ -79,8 +91,9 @@ def main():
   send_parser.set_defaults(handler=send_command)
 
   # "get" parser
-  send_parser = subparsers.add_parser('get', help="get a file")
-  send_parser.add_argument('file_id', nargs='*', help="File IDs you want to get")  # (from: https://stackoverflow.com/a/22850525/2885946)
+  send_parser = subparsers.add_parser('get', help="get files")
+  send_parser.add_argument('--stdout', action="store_true", help="Output to stdout")
+  send_parser.add_argument('file_ids', nargs='*', help="File IDs you want to get")  # (from: https://stackoverflow.com/a/22850525/2885946)
   send_parser.set_defaults(handler=get_command)
 
   # "delete" parser
