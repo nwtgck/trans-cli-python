@@ -37,6 +37,12 @@ script:
   # Delete the file
   - trans-cli delete `cat file_id.txt`
 
+  # Config running test
+  - trans-cli config --list
+  - trans-cli config --store-path
+  - trans-cli config --server=local8080
+
+
 cache:
   - apt
   - directories:

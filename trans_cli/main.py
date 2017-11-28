@@ -11,6 +11,7 @@ import os
 import json
 import re
 import pkg_resources
+import itertools
 
 DEFAULT_SERVER_URL     = "https://trans-akka.herokuapp.com"
 CONFIG_DIR_NAME        = "trans-cli-python"
@@ -78,6 +79,16 @@ def init():
 
     # Write default setting
     write_server_url(DEFAULT_SERVER_URL)
+
+    # Set default server aliases
+    overwrite_config({
+      "server_aliases": lambda prev: [
+        {"name": "local80",   "url": "http://localhost"},
+        {"name": "local8080", "url": "http://localhost:8080"},
+        {"name": "local8181", "url": "http://localhost:8181"},
+        {"name": "heroku",    "url": "https://trans-akka.herokuapp.com"}
+      ]
+    })
 
   # Load SERVER_URL from config
   with open(TRANS_CONFIG_FILE_PATH, 'r') as f:
@@ -213,8 +224,19 @@ def config_command(args):
     # Show store-path of config
     print(TRANS_CONFIG_FILE_PATH)
   elif args.server:
+    server = args.server
+    if is_valid_url(server):
+      new_url = server
+    else:
+      with open(TRANS_CONFIG_FILE_PATH, 'r') as f:
+        config = json.load(f)
+        server_aliases = config.get("server_aliases")
+        if server_aliases is None:
+          print("Error: server_aliases is missing in config", file=sys.stderr)
+          exit(1)
+        found_alias = next(filter(lambda x: x["name"] == server, server_aliases), None)
+        new_url = found_alias.get("url")
     # Set new server URL
-    new_url = args.server
     write_server_url(new_url)
     print("'%s' set" % (new_url))
   else:
@@ -263,7 +285,7 @@ def main():
   config_parser = subparsers.add_parser('config', help="set server URL or show config")
   config_parser.add_argument('--list', action="store_true", help='Show current config')
   config_parser.add_argument('--store-path', action="store_true", help='Show store path')
-  config_parser.add_argument('--server', help="Server URL you want to set")
+  config_parser.add_argument('--server',    help="Server URL you want to set")
   config_parser.set_defaults(handler=config_command)
 
 
