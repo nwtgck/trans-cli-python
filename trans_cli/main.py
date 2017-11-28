@@ -12,17 +12,25 @@ import json
 import re
 import pkg_resources
 
-DEFAULT_SERVER_URL = "https://trans-akka.herokuapp.com"
-CONFIG_DIR_NAME    = "trans-cli-python"
-CONFIG_FILE_NAME   = "config.json"
-VERSION            = pkg_resources.require("trans-cli")[0].version # (from: https://stackoverflow.com/a/2073599/2885946)
+DEFAULT_SERVER_URL     = "https://trans-akka.herokuapp.com"
+CONFIG_DIR_NAME        = "trans-cli-python"
+CONFIG_FILE_NAME       = "config.json"
+VERSION                = pkg_resources.require("trans-cli")[0].version # (from: https://stackoverflow.com/a/2073599/2885946)
+# "~/.config"
+CONFIG_DIR_PATH        = os.path.join(os.environ['HOME'], ".config")
+# "~/.config/<CONFIG_DIR_NAME>/"
+TRANS_CONFIG_DIR_PATH  = os.path.join(CONFIG_DIR_PATH, CONFIG_DIR_NAME)
+# "~/.config/<CONFIG_DIR_NAME>/<CONFIG_FILE_NAME>"
+TRANS_CONFIG_FILE_PATH = os.path.join(TRANS_CONFIG_DIR_PATH, CONFIG_FILE_NAME)
 
 
 def write_server_url(new_server_url):
-  with open(trans_config_file_path, 'w') as f:
-    json.dump({
-      "server_url": new_server_url,
-    }, f)
+  with open(TRANS_CONFIG_FILE_PATH, 'r') as f:
+    config = json.load(f)
+    # Rewrite
+    config["server_url"] = new_server_url
+    with open(TRANS_CONFIG_FILE_PATH, 'w') as f:
+      json.dump(config, f, sort_keys=True, indent=2)
 
 def is_valid_url(url):
   # (from: https://stackoverflow.com/a/7160778/2885946)
@@ -35,36 +43,33 @@ def is_valid_url(url):
     r'(?:/?|[/?]\S+)$', re.IGNORECASE)
   return regex.match(url)
 
-# "~/.config"
-config_dir_path = os.path.join(os.environ['HOME'], ".config")
 # If "~/.config" doesn't exist
-if not os.path.exists(config_dir_path):
+if not os.path.exists(CONFIG_DIR_PATH):
   # Make ~/.config
-  os.mkdir(config_dir_path)
+  os.mkdir(CONFIG_DIR_PATH)
 
-
-# "~/.config/<CONFIG_DIR_NAME>/"
-trans_config_dir_path = os.path.join(config_dir_path, CONFIG_DIR_NAME)
 # If "~/.config/<CONFIG_DIR_NAME>/" doesn't exist
-if not os.path.exists(trans_config_dir_path):
+if not os.path.exists(TRANS_CONFIG_DIR_PATH):
   # Make "~/.config/<CONFIG_DIR_NAME>/"
-  os.mkdir(trans_config_dir_path)
+  os.mkdir(TRANS_CONFIG_DIR_PATH)
 
 
-# "~/.config/<CONFIG_DIR_NAME>/<CONFIG_FILE_NAME>"
-trans_config_file_path = os.path.join(trans_config_dir_path, CONFIG_FILE_NAME)
 # If "~/.config/<CONFIG_DIR_NAME>/<CONFIG_FILE_NAME>" doesn't exist
-if not os.path.exists(trans_config_file_path):
+if not os.path.exists(TRANS_CONFIG_FILE_PATH):
+  # Write empty setting
+  with open(TRANS_CONFIG_FILE_PATH, 'w') as f:
+    json.dump({}, f)
+
   # Write default setting
   write_server_url(DEFAULT_SERVER_URL)
 
 # Load SERVER_URL from config
-with open(trans_config_file_path, 'r') as f:
+with open(TRANS_CONFIG_FILE_PATH, 'r') as f:
   config = json.load(f)
   SERVER_URL = config["server_url"]
 
   if not is_valid_url(SERVER_URL):
-    print("Server URL (='%s') is NOT valid in '%s'" % (SERVER_URL, trans_config_file_path), file=sys.stderr)
+    print("Server URL (='%s') is NOT valid in '%s'" % (SERVER_URL, TRANS_CONFIG_FILE_PATH), file=sys.stderr)
     exit(1)
 
 
