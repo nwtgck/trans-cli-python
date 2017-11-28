@@ -4,10 +4,10 @@ Command Line Interface for [trans server](https://github.com/nwtgck/trans-server
 
 ## Installation
 
-You can install `tran-client` command by `pip`
+You can install `tran-cli` command by `pip`
 
 ```bash
-pip3 install git+https://github.com/nwtgck/trans-client-python
+pip3 install git+https://github.com/nwtgck/trans-cli-python
 ```
 
-Then you can use `trans-client` command.
+Then you can use `trans-cli` command.

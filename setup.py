@@ -3,13 +3,13 @@
 from setuptools import setup, find_packages
 
 setup(
-  name='trans-client',
+  name='trans-cli',
   version='1.0-SNAPSHOT',
   packages=find_packages(),
   install_requires=[],
   entry_points={
     'console_scripts':
-      'trans-client = trans_client.main:main'
+      'trans-cli = trans_cli.main:main'
   },
   zip_safe=False,
   classifiers=[
