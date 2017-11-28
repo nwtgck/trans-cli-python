@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 setup(
   name='trans-cli',
-  version='1.0-SNAPSHOT',
+  version='1.0.0',
   packages=find_packages(),
   install_requires=[],
   entry_points={
