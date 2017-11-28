@@ -16,6 +16,9 @@ script:
   # Install trans-cli from GitHub
   - pip3 install --upgrade git+https://github.com/nwtgck/trans-cli-python.git@$TRAVIS_BRANCH
 
+  # Show version
+  - trans-cli --version
+
   # Set server URL to localhost trans server
   - trans-cli server-url "http://localhost:8080"
 

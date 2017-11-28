@@ -10,10 +10,13 @@ import sys
 import os
 import json
 import re
+import pkg_resources
 
 DEFAULT_SERVER_URL = "https://trans-akka.herokuapp.com"
 CONFIG_DIR_NAME    = "trans-cli-python"
 CONFIG_FILE_NAME   = "config.json"
+VERSION            = pkg_resources.require("trans-cli")[0].version # (from: https://stackoverflow.com/a/2073599/2885946)
+
 
 def write_server_url(new_server_url):
   with open(trans_config_file_path, 'w') as f:
@@ -174,8 +177,10 @@ def server_url_command(args):
 
 def main():
   # (from: https://qiita.com/oohira/items/308bbd33a77200a35a3d)
-  parser     = argparse.ArgumentParser(description="CLI for trans")
+  parser     = argparse.ArgumentParser(description="CLI for trans (version: %s)" % (VERSION))
   subparsers = parser.add_subparsers()
+
+  parser.add_argument("-v", "--version", action="store_true")
 
   # "help" parser
   parser_help = subparsers.add_parser('help', help='see `help -h`')
@@ -218,6 +223,9 @@ def main():
   if hasattr(args, 'handler'):
     # Handle command
     args.handler(args)
+  elif hasattr(args, 'version'):
+    # Show version
+    print("trans-cli (python) version %s" % VERSION)
   else:
     # Show help
     parser.print_help()
