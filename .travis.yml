@@ -11,7 +11,7 @@ services:
 
 script:
   # Run trans server on Docker
-  - docker run -d -p 8080:80 nwtgck/trans-server-akka:v1.5.0
+  - docker run -d -p 8080:80 nwtgck/trans-server-akka:v1.7.0
 
   # Install trans-cli from GitHub
   - pip3 install --upgrade git+https://github.com/nwtgck/trans-cli-python.git@$TRAVIS_COMMIT
